@@ -1,0 +1,146 @@
+import pygame
+
+# Constants
+GAME_SCREEN_SIZE = (800, 600)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Player colors
+PLAYER_COLORS = {
+    1: (220, 50, 50),   # Red
+    2: (50, 90, 220),   # Blue
+}
+
+# Region colors (six corners + center)
+REGION_COLORS = {
+    'red': (250, 200, 200),
+    'blue': (200, 200, 250),
+    'green': (200, 255, 200),
+    'yellow': (255, 255, 180),
+    'purple': (230, 200, 255),
+    'orange': (255, 220, 180),
+    'center': WHITE,
+}
+
+# Game pieces
+PIECES = {
+    (-4, -1): 1, (-4, -2): 1, (-4, -3): 1, (-4, -4): 1,
+    (-3, -2): 1, (-3, -3): 1, (-3, -4): 1,
+    (-2, -3): 1, (-2, -4): 1,
+    (-1, -4): 1,
+    
+    (1, 4): 2, (2, 4): 2, (3, 4): 2, (4, 4): 2,
+    (2, 3): 2, (3, 3): 2, (4, 3): 2,
+    (3, 2): 2, (4, 2): 2,
+    (4, 1): 2,
+}
+
+class GameBoard:
+    def __init__(self, screen):
+        self.screen = screen
+        self.unit_length = 22
+        self.circle_radius = 12
+        self.center_x = GAME_SCREEN_SIZE[0] // 2
+        self.center_y = GAME_SCREEN_SIZE[1] // 2
+        self.font = pygame.font.Font(None, 16)
+
+    def hex_to_pixel(self, p, q):
+        """Convert hex coordinates to pixel coordinates."""
+        x = self.unit_length * (3**0.5) * (p + q / 2)
+        y = self.unit_length * 1.5 * q
+        return int(self.center_x + x), int(self.center_y - y)
+
+    def generate_board_coordinates(self):
+        """Generate all valid board coordinates."""
+        coords = []
+        
+        # Central hexagon
+        for p in range(-3, 4):
+            for q in range(-3, 4):
+                if -3 <= p + q <= 3:
+                    coords.append((p, q))
+        
+        # Extended regions
+        regions = [
+            (range(-4, 1), range(4, 9), lambda p, q: p + q <= 4),    # Top-right
+            (range(0, 5), range(-8, -3), lambda p, q: p + q >= -4),   # Bottom-left
+            (range(-8, -3), range(0, 5), lambda p, q: p + q >= -4),   # Top-left
+            (range(4, 9), range(-4, 1), lambda p, q: p + q <= 4),     # Bottom-right
+            (range(0, 5), range(0, 5), lambda p, q: p + q >= 4),      # Far bottom-right
+            (range(-4, 1), range(-4, 1), lambda p, q: p + q <= -4),   # Far top-left
+        ]
+        
+        for p_range, q_range, condition in regions:
+            for p in p_range:
+                for q in q_range:
+                    if condition(p, q):
+                        coords.append((p, q))
+        
+        return coords
+
+    def get_region(self, p, q):
+        regions = {
+            'red': [(-4, -1), (-4, -2), (-4, -3), (-4, -4),
+                    (-3, -2), (-3, -3), (-3, -4),
+                    (-2, -3), (-2, -4),
+                    (-1, -4)],
+            
+            'blue': [(1, 4), (2, 4), (3, 4), (4, 4),
+                     (2, 3), (3, 3), (4, 3),
+                     (3, 2), (4, 2),
+                     (4, 1)],
+            
+            'green': [(-1, 5), (-2, 5), (-2, 6),
+                      (-3, 5), (-3, 6), (-3, 7),
+                      (-4, 5), (-4, 6), (-4, 7), (-4, 8)],
+            
+            'yellow': [(1, -5), (2, -5), (2, -6),
+                        (3, -5), (3, -6), (3, -7),
+                        (4, -5), (4, -6), (4, -7), (4, -8)],
+            
+            'purple': [(-8, 4), (-7, 4), (-6, 4), (-5, 4),
+                        (-7, 3), (-6, 3), (-5, 3),
+                        (-6, 2), (-5, 2),
+                        (-5, 1)],
+            
+            'orange': [(5, -1), (5, -2), (6, -2),
+                       (5, -3), (6, -3), (7, -3),
+                       (5, -4), (6, -4), (7, -4), (8, -4)],
+        }
+        
+        for region, coords in regions.items():
+            if (p, q) in coords:
+                return region
+        return 'center'
+
+    def draw_piece(self, x, y, player):
+        """Draw a game piece at the specified position."""
+        color = PLAYER_COLORS[player]
+        pygame.draw.circle(self.screen, color, (x, y), self.circle_radius - 1)
+        pygame.draw.circle(self.screen, WHITE, (x - 3, y - 3), int(self.circle_radius * 0.3))  # Highlight
+        pygame.draw.circle(self.screen, BLACK, (x + 2, y + 2), 2)  # Shadow
+        pygame.draw.circle(self.screen, BLACK, (x, y), self.circle_radius, 1)  # Border
+
+    def draw(self, bg_color=(250, 250, 250)):
+        """Draw the entire game board."""
+        self.screen.fill(bg_color)
+        
+        for p, q in self.generate_board_coordinates():
+            x, y = self.hex_to_pixel(p, q)
+            region = self.get_region(p, q)
+            region_color = REGION_COLORS[region]
+
+            # Draw region background
+            pygame.draw.circle(self.screen, region_color, (x, y), self.circle_radius)
+            pygame.draw.circle(self.screen, BLACK, (x, y), self.circle_radius, 1)
+
+            # Draw piece if present
+            if (p, q) in PIECES:
+                self.draw_piece(x, y, PIECES[(p, q)])
+                
+            label = self.font.render(f"{p},{q}", True, BLACK)
+            self.screen.blit(label, label.get_rect(center=(x, y)))
+        pygame.display.flip()
+
+
+        pygame.display.flip()
