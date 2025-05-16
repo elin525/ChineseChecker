@@ -1,22 +1,27 @@
 import pygame
 import sys
-from gameBoard import GameBoard
+from gameboardGUI import GameBoard
 
+# Initialize pygame and its font module
 pygame.init()
+pygame.font.init()
 
+# Constants
 LAUNCH_SCREEN_SIZE = (800, 600)
+GAME_SCREEN_SIZE = (800, 600)
 BG_COLOR = (10, 10, 10)
 WHITE = (255, 255, 255)
-
-# Fonts
-FONT_BUTTON = pygame.font.SysFont('comic sans ms', 28, bold=True)
-FONT_TITLE = pygame.font.SysFont('comic sans ms', 60, bold=True)
+BLACK = (0, 0, 0)
 
 # Button colors
 START_COLOR = (60, 120, 200)
 START_HOVER = (85, 145, 225)
 EXIT_COLOR = (160, 40, 40)
 EXIT_HOVER = (185, 65, 65)
+
+# Fonts - moved after pygame.init() and pygame.font.init()
+FONT_BUTTON = pygame.font.SysFont('comic sans ms', 28, bold=True)
+FONT_TITLE = pygame.font.SysFont('comic sans ms', 60, bold=True)
 
 class LaunchScreen:
     def __init__(self):
@@ -61,9 +66,9 @@ class LaunchScreen:
             
             self.screen.blit(self.board_img, self.board_rect)
             self.screen.blit(
-                    self.title_text,
-                    (LAUNCH_SCREEN_SIZE[0] // 2 - self.title_text.get_width() // 2, 30)
-                )
+                self.title_text,
+                (LAUNCH_SCREEN_SIZE[0] // 2 - self.title_text.get_width() // 2, 30)
+            )
 
             # Draw buttons
             hover_start = self.draw_button(
@@ -94,23 +99,25 @@ class LaunchScreen:
                         sys.exit()
 
 def main():
-    pygame.init()
-    
+    # Show launch screen
     launch = LaunchScreen()
     launch.run()
     
-    screen = pygame.display.set_mode((800, 600))
+    # Initialize game screen
+    screen = pygame.display.set_mode(GAME_SCREEN_SIZE)
     pygame.display.set_caption("Chinese Checkers - Game")
     
-    board = GameBoard()
+    # Create game board
+    board = GameBoard(screen)
     
+    # Main game loop
     running = True
     while running:
+        board.draw()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        
-        board.draw(screen)
     
     pygame.quit()
 
