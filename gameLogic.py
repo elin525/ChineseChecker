@@ -56,37 +56,38 @@ class gameLogic:
             return set()
 
         allPossibleJumps: set[tuple[tuple[int, int], ...]] = set()
-
-        jumpOver = set()
-
-        for neighbor in board.nodes[current_pos].neighbors:
-            if board.nodes[neighbor].state != GameState.EMPTY:
-                jumpOver.add(neighbor)
-
-        for piece in jumpOver:
-            dx = piece[0]-current_pos[0]
-            dz = piece[1]-current_pos[1]
-
-            path = [current_pos]
-            pos = current_pos
-
-            while True:
-                mid = (pos[0] + dx, pos[1] + dz)
-                jump = (pos[0] + 2 * dx, pos[1] + 2 * dz)
-
-                if (
-                    mid in board.nodes and
-                    jump in board.nodes and
-                    board.nodes[mid].state != GameState.EMPTY and
-                    board.nodes[jump].state == GameState.EMPTY
-                ):
-                    path.append(jump)
-                    allPossibleJumps.add(tuple(path))
-                    pos = jump
-                else:
-                    break
+        allPossibleJumps: set[tuple[tuple[int, int], ...]] = set()
+        gameLogic._findAllPath(board, current_pos, [current_pos], {
+                               current_pos}, allPossibleJumps)
 
         return allPossibleJumps
+
+    @staticmethod
+    def _findAllPath(board: gameBoard,
+                     current_pos: tuple[int, int],
+                     temp_path: list[tuple[int, int]],
+                     visited: set[tuple[int, int]],
+                     allPossibleJump: set[tuple[tuple[int, int], ...]]) -> None:
+        """
+        Recursive helper to find all jump paths starting from current_pos.
+        """
+        directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+
+        for dx, dy in directions:
+            mid = (current_pos[0] + dx, current_pos[1] + dy)
+            new_pos = (current_pos[0] + 2*dx, current_pos[1] + 2*dy)
+
+            if (
+                mid in board.nodes and
+                new_pos in board.nodes and
+                board.nodes[mid].state != GameState.EMPTY and
+                board.nodes[new_pos].state == GameState.EMPTY and
+                new_pos not in visited
+            ):
+                new_path = temp_path + [new_pos]
+                allPossibleJump.add(tuple(new_path))
+                gameLogic._findAllPath(board, new_pos, new_path, visited | {
+                                       new_pos}, allPossibleJump)
 
     @staticmethod
     def getAllPossibleMoves(board: gameBoard, state: GameState) -> set[tuple[tuple[int, int], ...]]:
