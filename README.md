@@ -1,6 +1,5 @@
 # Chinese Checkers with AI  
 *Final Project for CPSC 481 - Artificial Intelligence*
-*A Simplified Version of Chinese Checkers*
 
 A Python implementation of a **simplified Chinese Checkers game** with an AI opponent.  
 Built as a final project for **CPSC 481** at California State University, Fullerton.  
