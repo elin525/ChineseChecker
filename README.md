@@ -47,8 +47,8 @@ The game uses Pygame for the GUI and features single-move-per-turn rules and a m
 
 1. **Clone this repo**  
    ```bash
-   git clone <your-repo-url>
-   cd <repo-folder>
+   git clone <https://github.com/3374128044/ChineseChecker.git>
+   cd <https://github.com/3374128044/ChineseChecker.git>
    ```
 2. **Install requirements**  
    ```bash
