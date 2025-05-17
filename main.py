@@ -1,6 +1,7 @@
 import pygame
 import sys
 from gameboardGUI import GameBoard
+#from gameBoardController import GameBoardController
 
 # Initialize pygame and its font module
 pygame.init()
@@ -107,17 +108,29 @@ def main():
     screen = pygame.display.set_mode(GAME_SCREEN_SIZE)
     pygame.display.set_caption("Chinese Checkers - Game")
     
-    # Create game board
+    # Create game board and controller
     board = GameBoard(screen)
+    #controller = GameBoardController(board)
     
     # Main game loop
     running = True
     while running:
-        board.draw()
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left mouse button
+                    # Convert pixel to hex coordinates 
+                    hex_coord = board.pixel_to_hex(event.pos[0], event.pos[1])
+                    if hex_coord:
+                        if not controller.selected_piece:
+                            controller.select_piece(hex_coord)
+                        else:
+                            if controller.move_selected_piece(hex_coord):
+                                print("Move successful!")
+                            controller.reset_selection()
+        
+        board.draw()
     
     pygame.quit()
 

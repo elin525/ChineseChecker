@@ -52,8 +52,41 @@ class GameBoard:
     
     def pixel_to_hex(self, x, y):
         """Convert pixel coordinates to hex coordinates."""
-        #TODO: pixel to hex
-        pass
+        # Convert to axial coordinates relative to center
+        rel_x = x - self.center_x
+        rel_y = self.center_y - y  # Invert y-axis
+        
+        # Convert to axial coordinates
+        q = (rel_x * (3**0.5)/3 - rel_y / 3) / self.unit_length
+        r = rel_y * 2/3 / self.unit_length
+        
+        # Convert axial to cube coordinates
+        cube_x = q
+        cube_z = r
+        cube_y = -cube_x - cube_z
+        
+        # Round to nearest hex
+        rx = round(cube_x)
+        ry = round(cube_y)
+        rz = round(cube_z)
+        
+        # Correct rounding errors
+        x_diff = abs(rx - cube_x)
+        y_diff = abs(ry - cube_y)
+        z_diff = abs(rz - cube_z)
+        
+        if x_diff > y_diff and x_diff > z_diff:
+            rx = -ry - rz
+        elif y_diff > z_diff:
+            ry = -rx - rz
+        else:
+            rz = -rx - ry
+        
+        # Return only if this is a valid board coordinate
+        hex_coord = (rx, rz)
+        if hex_coord in self.generate_board_coordinates():
+            return hex_coord
+        return None
 
     def generate_board_coordinates(self):
         """Generate all valid board coordinates."""
@@ -128,8 +161,8 @@ class GameBoard:
 
     def draw_highlight(self, x, y):
         """Draw a highlight circle at the specified position."""
-        #TODO: 
-        pass
+        highlight_color = (255, 255, 0)  # Yellow for highlight
+        pygame.draw.circle(self.screen, highlight_color, (x, y), self.circle_radius + 2, 2)
         
     def draw(self, bg_color=(250, 250, 250)):
         """Draw the entire game board."""
@@ -150,7 +183,4 @@ class GameBoard:
                 
             label = self.font.render(f"{p},{q}", True, BLACK)
             self.screen.blit(label, label.get_rect(center=(x, y)))
-        pygame.display.flip()
-
-
         pygame.display.flip()
