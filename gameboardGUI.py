@@ -49,6 +49,11 @@ class GameBoard:
         x = self.unit_length * (3**0.5) * (p + q / 2)
         y = self.unit_length * 1.5 * q
         return int(self.center_x + x), int(self.center_y - y)
+    
+    def pixel_to_hex(self, x, y):
+        """Convert pixel coordinates to hex coordinates."""
+        #TODO: pixel to hex
+        pass
 
     def generate_board_coordinates(self):
         """Generate all valid board coordinates."""
@@ -121,6 +126,11 @@ class GameBoard:
         pygame.draw.circle(self.screen, BLACK, (x + 2, y + 2), 2)  # Shadow
         pygame.draw.circle(self.screen, BLACK, (x, y), self.circle_radius, 1)  # Border
 
+    def draw_highlight(self, x, y):
+        """Draw a highlight circle at the specified position."""
+        #TODO: 
+        pass
+        
     def draw(self, bg_color=(250, 250, 250)):
         """Draw the entire game board."""
         self.screen.fill(bg_color)
