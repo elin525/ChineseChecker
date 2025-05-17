@@ -21,32 +21,6 @@ class node:
         self.neighbors = set() # Set of coordinates of neighboring nodes
         self.state = state # GameState enum: EMPTY, PLAYER, or AI
 
-def generate_two_player_board_coords():
-    coords = []
-    # Main center hexagon (radius 4)
-    for x in range(-4, 5):
-        for z in range(-4, 5):
-            y = -x - z
-            if abs(y) <= 4:
-                coords.append((x, z))
-    # Player 1 "arm" (bottom right)
-    for x, z in [
-        (1, -5), (2, -5), (3, -5), (4, -5),
-        (2, -6), (3, -6), (4, -6),
-        (3, -7), (4, -7),
-        (4, -8)
-    ]:
-        coords.append((x, z))
-    # Player 2/AI "arm" (top left)
-    for x, z in [
-        (-4, 5), (-3, 5), (-2, 5), (-1, 5),
-        (-4, 6), (-3, 6), (-2, 6),
-        (-4, 7), (-3, 7),
-        (-4, 8)
-    ]:
-        coords.append((x, z))
-    return list(set(coords))
-
 class gameBoard:
     """
     Represents the entire Chinese Checkers game board.
@@ -65,9 +39,32 @@ class gameBoard:
         Resets the board to its initial configuration with pieces in starting positions.
         """
         # Initialize central empty board region
-        for x, z in generate_two_player_board_coords():
-            self.nodes[(x, z)] = node(x, z, GameState.EMPTY)
+        for x in range(-4, 5):
+            for z in range(-4, 5):
+                y = -x - z
+                if abs(y) <= 4:
+                    self.nodes[(x, z)] = node(x, z, GameState.EMPTY)
 
+
+        # Define initial positions for ai pieces
+        self.ai_nodes = {
+            (-4, 5), (-3, 5), (-2, 5), (-1, 5),
+            (-4, 6), (-3, 6), (-2, 6),
+            (-4, 7), (-3, 7),
+            (-4, 8)
+        }
+        for (x, z) in self.ai_nodes:
+            self.nodes[(x, z)] = node(x, z, GameState.AI)
+
+        # Define initial positions for player pieces
+        self.player_nodes = {
+            (1, -5), (2, -5), (3, -5), (4, -5),
+            (2, -6), (3, -6), (4, -6),
+            (3, -7), (4, -7),
+            (4, -8)
+        }
+        for (x, z) in self.player_nodes:
+            self.nodes[(x, z)] = node(x, z, GameState.PLAYER)
 
         # Add neighbors to each node based on 6 directions in a hex grid
         DIRECTIONS = [(1, 0), (1, -1), (0, -1),
@@ -79,27 +76,20 @@ class gameBoard:
                     node_obj.neighbors.add(neighbor_coord)
                     
 
-    def moveNode(self, current_pos, new_pos):
+    def moveNode(self, start, end):
         """
         Moves a piece from current_pos to new_pos if the move is valid.
         Updates both the board state and the player's set.
         """
-        if current_pos in self.nodes and new_pos in self.nodes:
-            current_node = self.nodes[current_pos]
-            new_node = self.nodes[new_pos]
-
-            if current_node.state != GameState.EMPTY and new_node.state == GameState.EMPTY:
-                if current_node.state == GameState.PLAYER:
-                    new_node.state = GameState.PLAYER
-                    current_node.state = GameState.EMPTY
-                    self.player_nodes.remove(current_pos)
-                    self.player_nodes.add(new_pos)
-
-                elif current_node.state == GameState.AI:
-                    new_node.state = GameState.AI
-                    current_node.state = GameState.EMPTY
-                    self.ai_nodes.remove(current_pos)
-                    self.ai_nodes.add(new_pos)
+        moving_state = self.nodes[start].state
+        self.nodes[start].state = GameState.EMPTY
+        self.nodes[end].state = moving_state
+        if moving_state == GameState.PLAYER:
+            self.player_nodes.remove(start)
+            self.player_nodes.add(end)
+        elif moving_state == GameState.AI:
+            self.ai_nodes.remove(start)
+            self.ai_nodes.add(end)
 
 
 #Example usage

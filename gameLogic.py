@@ -1,65 +1,62 @@
 from gameBoard import gameBoard, GameState
 
+
 class gameLogic:
 
     @staticmethod
-    def getPossibleMove(board: gameBoard, pos: tuple) -> set[tuple[tuple[int, int], tuple[int, int]]]:
-        """Return all simple (adjacent) moves for the piece at pos as (start, end)."""
-        if pos not in board.nodes or board.nodes[pos].state == GameState.EMPTY:
+    def getPossibleMove(board: gameBoard, pos: tuple):
+        """return all possible move and jump"""
+
+        if pos not in board.nodes:
             return set()
-        moves = set()
-        for neighbor in board.nodes[pos].neighbors:
-            if neighbor in board.nodes and board.nodes[neighbor].state == GameState.EMPTY:
-                moves.add((pos, neighbor))
-        return moves
 
-    @staticmethod
-    def getAllPossibleJumps(board: gameBoard, pos: tuple) -> set[tuple[tuple[int, int], tuple[int, int]]]:
-        """Return all valid jump moves from pos as (start, end) tuples."""
-        all_jumps = set()
-        gameLogic._find_jumps(board, pos, pos, set(), all_jumps)
-        return all_jumps
-
-    @staticmethod
-    def _find_jumps(board, start, current, visited, result):
-        """Recursive helper for jump logic."""
-        directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
-        for dx, dy in directions:
-            mid = (current[0] + dx, current[1] + dy)
-            dest = (current[0] + 2*dx, current[1] + 2*dy)
-            if (
-                mid in board.nodes and
-                dest in board.nodes and
-                board.nodes[mid].state != GameState.EMPTY and
-                board.nodes[dest].state == GameState.EMPTY and
-                dest not in visited
-            ):
-                result.add((start, dest))
-                gameLogic._find_jumps(board, start, dest, visited | {dest}, result)
-
-    @staticmethod
-    def getAllPossibleMoves(board: gameBoard, who: GameState) -> set[tuple[tuple[int, int], tuple[int, int]]]:
-        """Get all moves for PLAYER or AI as (start, end)."""
         result = set()
-        node_set = board.player_nodes if who == GameState.PLAYER else board.ai_nodes
-        for pos in node_set:
-            result |= gameLogic.getPossibleMove(board, pos)
-            result |= gameLogic.getAllPossibleJumps(board, pos)
+        current_node = board.nodes[pos]
+        for node in current_node.neighbors:
+            if board.nodes[node].state == GameState.EMPTY:
+                result.add((node))
+            else:
+                jump_node = (node[0] + (node[0] - pos[0]),
+                             node[1] + (node[1] - pos[1]))
+                if jump_node in board.nodes and board.nodes[jump_node].state == GameState.EMPTY:
+                    if jump_node != pos:
+                        result.add((jump_node))
         return result
 
     @staticmethod
-    def is_valid_move(start, end, board: gameBoard) -> bool:
-        """Check if a simple adjacent move is valid."""
-        return (start, end) in gameLogic.getPossibleMove(board, start)
+    def getAllPossibleMoves(board: gameBoard, who: GameState):
+        """Get all moves for PLAYER or AI as (start, end)."""
+        if who not in (GameState.PLAYER, GameState.AI):
+            raise ValueError("Invalid player type. Must be PLAYER or AI.")
+
+        result = set()
+        if who == GameState.PLAYER:
+            for pos in board.player_nodes:
+                possible_moves = gameLogic.getPossibleMove(board, pos)
+                for move in possible_moves:
+                    result.add((pos, move))
+        else:
+            for pos in board.ai_nodes:
+                possible_moves = gameLogic.getPossibleMove(board, pos)
+                for move in possible_moves:
+                    result.add((pos, move))
+
+        return result
 
     @staticmethod
-    def is_valid_jump(start, end, board: gameBoard) -> bool:
-        """Check if a jump move is valid."""
-        return (start, end) in gameLogic.getAllPossibleJumps(board, start)
+    def is_valid_move(start, end, board: gameBoard):
+        """Check if move is valid."""
+        if start not in board.nodes or end not in board.nodes:
+            return False
+        allPossibleMoves = gameLogic.getPossibleMove(board, start)
+        for move in allPossibleMoves:
+            if move == end:
+                return True
+        return False
 
     @staticmethod
     def checkWinCondition(board: gameBoard):
-        # Checks if player or AI occupies all of opponent's home positions
+        # check if any one wins
         player_goal = {
             (-4, 5), (-3, 5), (-2, 5), (-1, 5),
             (-4, 6), (-3, 6), (-2, 6),
@@ -70,9 +67,8 @@ class gameLogic:
             (2, -6), (3, -6), (4, -6),
             (3, -7), (4, -7), (4, -8)
         }
-        # If all goal spots are occupied by correct player, that player wins
-        if all(board.nodes[pos].state == GameState.PLAYER for pos in player_goal):
+        if board.player_nodes <= player_goal:
             return GameState.PLAYER
-        if all(board.nodes[pos].state == GameState.AI for pos in ai_goal):
+        if board.ai_nodes <= ai_goal:
             return GameState.AI
-        return GameState.EMPTY  # Game not over
+        return GameState.EMPTY
