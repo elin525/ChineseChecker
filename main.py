@@ -1,138 +1,69 @@
 import pygame
 import sys
-from gameboardGUI import GameBoard
-#from gameBoardController import GameBoardController
+from gameboardGUI import GameBoardGUI
+from gameBoardController import GameBoardController
+from aiAgent import aiAgent
 
-# Initialize pygame and its font module
 pygame.init()
-pygame.font.init()
 
-# Constants
-LAUNCH_SCREEN_SIZE = (800, 600)
-GAME_SCREEN_SIZE = (800, 600)
-BG_COLOR = (10, 10, 10)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
+SCREEN_SIZE = (800, 600)
+screen = pygame.display.set_mode(SCREEN_SIZE)
+pygame.display.set_caption("Chinese Checkers (Minimal Demo)")
+gui = GameBoardGUI(screen)
+controller = GameBoardController()
+clock = pygame.time.Clock()
 
-# Button colors
-START_COLOR = (60, 120, 200)
-START_HOVER = (85, 145, 225)
-EXIT_COLOR = (160, 40, 40)
-EXIT_HOVER = (185, 65, 65)
+current_turn = 1  # 1 = player, 2 = AI
 
-# Fonts - moved after pygame.init() and pygame.font.init()
-FONT_BUTTON = pygame.font.SysFont('comic sans ms', 28, bold=True)
-FONT_TITLE = pygame.font.SysFont('comic sans ms', 60, bold=True)
+running = True
+while running:
+    screen.fill((245, 245, 245))
+    valid_moves = controller.get_valid_moves()
+    gui.draw(controller.get_pieces(), controller.get_selected_piece(), valid_moves)
+    pygame.display.flip()
 
-class LaunchScreen:
-    def __init__(self):
-        self.screen = pygame.display.set_mode(LAUNCH_SCREEN_SIZE)
-        pygame.display.set_caption("Chinese Checkers")
-        self.clock = pygame.time.Clock()
-        
-        self.board_img = pygame.image.load("chinese_checkers.png")
-        self.board_rect = self.board_img.get_rect(center=(LAUNCH_SCREEN_SIZE[0] // 2, 
-                                                      LAUNCH_SCREEN_SIZE[1] // 2 - 30))
-        self.title_text = FONT_TITLE.render("Chinese Checkers", True, (240, 240, 230))
-        
-        # Button rectangles
-        self.start_button = pygame.Rect(
-            LAUNCH_SCREEN_SIZE[0] // 2 - 80,
-            LAUNCH_SCREEN_SIZE[1] - 140,
-            160, 45
-        )
-        self.exit_button = pygame.Rect(
-            LAUNCH_SCREEN_SIZE[0] // 2 - 80,
-            LAUNCH_SCREEN_SIZE[1] - 80,
-            160, 45
-        )
+    # Handle player turn
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and current_turn == 1:
+            coord = gui.pixel_to_hex(*event.pos)
+            if coord:
+                # Print state before move
+                sel = controller.selected_piece if controller.selected_piece else coord
+                print(f"[Player] Before move: start {sel} state = {controller.get_pieces().get(sel)}, end {coord} state = {controller.get_pieces().get(coord)}")
+                moved = controller.try_move(coord)
+                # Print state after move
+                print(f"[Player] After move: start {sel} state = {controller.get_pieces().get(sel)}, end {coord} state = {controller.get_pieces().get(coord)}")
+                if moved:
+                    print("Player moved.")
+                    current_turn = 2  # Switch to AI
 
-    def draw_button(self, text, rect, base_color, hover_color):
-        """Draw a button with hover effect."""
-        mouse_pos = pygame.mouse.get_pos()
-        is_hover = rect.collidepoint(mouse_pos)
-        color = hover_color if is_hover else base_color
-        
-        pygame.draw.rect(self.screen, color, rect, border_radius=10)
-        text_surf = FONT_BUTTON.render(text, True, WHITE)
-        text_rect = text_surf.get_rect(center=rect.center)
-        self.screen.blit(text_surf, text_rect)
-        
-        return is_hover
+    # Handle AI turn (outside event loop, so it happens automatically after player)
+    if current_turn == 2:
+        print("AI is thinking...")
+        board_for_ai = controller.to_game_board()
+        ai_move = aiAgent.getBestMove(board_for_ai, depth=2)
+        print(f"AI best move: {ai_move}")
 
-    def run(self):
-        """Run the launch screen loop."""
-        while True:
-            self.screen.fill(BG_COLOR)
-            
-            self.screen.blit(self.board_img, self.board_rect)
-            self.screen.blit(
-                self.title_text,
-                (LAUNCH_SCREEN_SIZE[0] // 2 - self.title_text.get_width() // 2, 30)
-            )
+        if ai_move:
+            start, end = ai_move
+            # Print state before AI move
+            print(f"[AI] Before move: start {start} state = {controller.get_pieces().get(start)}, end {end} state = {controller.get_pieces().get(end)}")
+            controller.selected_piece = start
+            ai_moved = controller.try_move(end)
+            controller.selected_piece = None
+            # Print state after AI move
+            print(f"[AI] After move: start {start} state = {controller.get_pieces().get(start)}, end {end} state = {controller.get_pieces().get(end)}")
+            if ai_moved:
+                print(f"AI moved from {start} to {end}.")
+            else:
+                print(f"AI failed to move from {start} to {end}.")
+        else:
+            print("AI has no valid moves!")
+        current_turn = 1  # Switch back to player
 
-            # Draw buttons
-            hover_start = self.draw_button(
-                "Start", self.start_button, START_COLOR, START_HOVER
-            )
-            hover_exit = self.draw_button(
-                "Exit", self.exit_button, EXIT_COLOR, EXIT_HOVER
-            )
+    clock.tick(60)
 
-            # Change cursor on hover
-            pygame.mouse.set_cursor(
-                pygame.SYSTEM_CURSOR_HAND if hover_start or hover_exit 
-                else pygame.SYSTEM_CURSOR_ARROW
-            )
-            
-            pygame.display.flip()
-            self.clock.tick(60)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.start_button.collidepoint(event.pos):
-                        return
-                    elif self.exit_button.collidepoint(event.pos):
-                        pygame.quit()
-                        sys.exit()
-
-def main():
-    # Show launch screen
-    launch = LaunchScreen()
-    launch.run()
-    
-    # Initialize game screen
-    screen = pygame.display.set_mode(GAME_SCREEN_SIZE)
-    pygame.display.set_caption("Chinese Checkers - Game")
-    
-    # Create game board and controller
-    board = GameBoard(screen)
-    #controller = GameBoardController(board)
-    
-    # Main game loop
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left mouse button
-                    # Convert pixel to hex coordinates 
-                    hex_coord = board.pixel_to_hex(event.pos[0], event.pos[1])
-                    if hex_coord:
-                        if not controller.selected_piece:
-                            controller.select_piece(hex_coord)
-                        else:
-                            if controller.move_selected_piece(hex_coord):
-                                print("Move successful!")
-                            controller.reset_selection()
-        
-        board.draw()
-    
-    pygame.quit()
-
-if __name__ == "__main__":
-    main()
+pygame.quit()
+sys.exit()

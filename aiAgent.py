@@ -24,7 +24,7 @@ class aiAgent:
         Higher score means AI is closer to winning.
         """
         # AI tries to reach player_start_zone
-        ai_goal = {
+        player_goal = {
             (-4, 5), (-3, 5), (-2, 5), (-1, 5),
             (-4, 6), (-3, 6), (-2, 6),
             (-4, 7), (-3, 7),
@@ -32,7 +32,7 @@ class aiAgent:
         }
 
         # Player tries to reach ai_start_zone
-        player_goal = {
+        ai_goal = {
             (1, -5), (2, -5), (3, -5), (4, -5),
             (2, -6), (3, -6), (4, -6),
             (3, -7), (4, -7),
@@ -57,14 +57,14 @@ class aiAgent:
         """
         Minimax algorithm with alpha-beta pruning.
         """
-        if depth == 0 or gameLogic.isGameOver(board):
+        if depth == 0 or gameLogic.checkWinCondition(board) != GameState.EMPTY:
             return aiAgent._evaluate(board)
 
         if maximizing_player:
             max_eval = float('-inf')
             for move in gameLogic.getAllPossibleMoves(board, GameState.AI):
                 new_board = copy.deepcopy(board)
-                start, end = move[0], move[-1]
+                start, end = move
                 new_board.moveNode(start, end)
 
                 eval = aiAgent._minmax_pruning(
@@ -79,7 +79,7 @@ class aiAgent:
             min_eval = float('inf')
             for move in gameLogic.getAllPossibleMoves(board, GameState.PLAYER):
                 new_board = copy.deepcopy(board)
-                start, end = move[0], move[-1]
+                start, end = move
                 new_board.moveNode(start, end)
 
                 eval = aiAgent._minmax_pruning(
@@ -93,14 +93,14 @@ class aiAgent:
     @staticmethod
     def getBestMove(board: gameBoard, depth: int) -> tuple[tuple[int, int], ...]:
         """
-        Returns the best move for the AI using the minimax algorithm with alpha-beta pruning.
+        Returns the best move for the AI: (start, end)
         """
         best_move = None
         best_value = float('-inf')
 
         for move in gameLogic.getAllPossibleMoves(board, GameState.AI):
             new_board = copy.deepcopy(board)
-            start, end = move[0], move[-1]
+            start, end = move
             new_board.moveNode(start, end)
 
             move_value = aiAgent._minmax_pruning(
@@ -108,6 +108,7 @@ class aiAgent:
 
             if move_value > best_value:
                 best_value = move_value
-                best_move = move  
+                best_move = move
 
-        return best_move
+        return best_move  # e.g., ((from_x, from_y), (to_x, to_y))
+
