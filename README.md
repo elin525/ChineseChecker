@@ -6,6 +6,9 @@ Built as a final project for **CPSC 481** at California State University, Fuller
 The game uses Pygame for the GUI and features single-move-per-turn rules and a minimax-based computer player.  
 **The AI search depth is set to 2 for fast response and smooth gameplay performance.**
 
+## Demo Preview
+🎬 [Click here to watch the gameplay walkthrough!](https://youtu.be/m80kzHgTHMk)
+
 ## Features
 
 - **Modern, clickable GUI** using Pygame
