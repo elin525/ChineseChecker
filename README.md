@@ -1,12 +1,15 @@
 # Chinese Checkers with AI  
 *Final Project for CPSC 481 - Artificial Intelligence*
 
-A Python implementation of a **simplified Chinese Checkers game** with an AI opponent.  
-Built as a final project for **CPSC 481** at California State University, Fullerton.  
+A Python implementation of a **simplified Chinese Checkers game** with an AI opponent. 
 The game uses Pygame for the GUI and features single-move-per-turn rules and a minimax-based computer player.  
 **The AI search depth is set to 2 for fast response and smooth gameplay performance.**
 
-## Demo Preview
+## Lauch Screen
+<img width="796" alt="image" src="https://github.com/user-attachments/assets/f36f2635-67c9-492d-90fc-8826d7c6dda3" />
+
+
+## Gameplay Preview
 🎬 [Click here to watch the gameplay walkthrough!](https://youtu.be/m80kzHgTHMk)
 
 ## Features
